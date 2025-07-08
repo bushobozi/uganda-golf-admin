@@ -27,7 +27,7 @@ const router = createRouter({
       },
     },
     {
-      path: '/:catchAll(.*)',
+      path: '/:pathMatch(.*)*',
       name: '404',
       component: Error404
     }
@@ -46,7 +46,7 @@ router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   
   // Initialize auth if not already done
-  if (authStore.isLoading) {
+  if (authStore.loading) {
     await authStore.initializeAuth()
   }
   
@@ -62,15 +62,18 @@ router.beforeEach(async (to, from, next) => {
         query: { redirect: to.fullPath } 
       })
     }
-  } else {
-    // Route doesn't require auth
-    if (to.name === 'login' && authStore.isAuthenticated) {
-      // User is already authenticated, redirect to home
+  } else if (to.meta.requiresGuest) {
+    // Route requires guest (unauthenticated user)
+    if (authStore.isAuthenticated) {
+      // User is authenticated, redirect to home
       next({ name: 'home' })
     } else {
-      // Proceed normally
+      // User is not authenticated, proceed
       next()
     }
+  } else {
+    // Route doesn't require specific auth state
+    next()
   }
 })
 
