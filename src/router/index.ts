@@ -22,9 +22,9 @@ const router = createRouter({
       name: 'login',
       component: Login,
       meta: {
-        title: 'Login',
-        requiresAuth: false
-      }
+        requiresGuest: true,
+        title: 'Login'
+      },
     },
     {
       path: '/:catchAll(.*)',
