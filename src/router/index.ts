@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Error404 from '@/views/Error404.vue'
 import HomeView from '@/views/HomeView.vue'
 import Login from '@/views/auth/Login.vue'
+import { useAuthStore } from '@/stores/auth'
 
 
 const router = createRouter({
@@ -36,6 +37,39 @@ const router = createRouter({
       return savedPosition
     } else {
       return { top: 0 }
+    }
+  }
+})
+
+// Global navigation guard
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+  
+  // Initialize auth if not already done
+  if (authStore.isLoading) {
+    await authStore.initializeAuth()
+  }
+  
+  // Check if route requires authentication
+  if (to.meta.requiresAuth) {
+    if (authStore.isAuthenticated) {
+      // User is authenticated, proceed
+      next()
+    } else {
+      // User is not authenticated, redirect to login
+      next({ 
+        name: 'login', 
+        query: { redirect: to.fullPath } 
+      })
+    }
+  } else {
+    // Route doesn't require auth
+    if (to.name === 'login' && authStore.isAuthenticated) {
+      // User is already authenticated, redirect to home
+      next({ name: 'home' })
+    } else {
+      // Proceed normally
+      next()
     }
   }
 })
